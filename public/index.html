@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>data-fmt · Data Formatter</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="container">
+    <main class="panel">
+      <header class="panel-header">
+        <h1 class="brand">data-fmt</h1>
+        <p class="tagline">Format and transform structured data</p>
+        <div class="spacer"></div>
+          <div class="theme-toggle" role="group" aria-label="Theme selection">
+            <!-- Button: follow system theme -->
+            <button id="themeSystem" class="btn-icon" aria-label="Use system theme" title="System">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="4" width="18" height="12" rx="2" ry="2"></rect>
+                <line x1="8" y1="20" x2="16" y2="20"></line>
+                <line x1="12" y1="16" x2="12" y2="20"></line>
+              </svg>
+            </button>
+          
+            <!-- Button: force dark mode -->
+            <button id="themeDark" class="btn-icon" aria-label="Dark mode" title="Dark">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+              </svg>
+            </button>
+          
+            <!-- Button: force light mode -->
+            <button id="themeLight" class="btn-icon" aria-label="Light mode" title="Light">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="4"></circle>
+                <line x1="12" y1="2" x2="12" y2="6"></line>
+                <line x1="12" y1="18" x2="12" y2="22"></line>
+                <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line>
+                <line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line>
+                <line x1="2" y1="12" x2="6" y2="12"></line>
+                <line x1="18" y1="12" x2="22" y2="12"></line>
+                <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line>
+                <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line>
+              </svg>
+            </button>
+          </div>
+      </header>
+
+      <!-- Type indicator -->
+      <div class="type-toggle" role="presentation">
+        <span class="type-pill json">JSON</span>
+        <span class="type-pill yaml">YAML</span>
+      </div>
+
+      <section class="left">
+        <div class="section-block">
+          <div class="step-row">
+            <h3 class="step">Input data</h3>
+            <button id="clear" class="btn btn-ghost">Clear input</button>
+          </div>
+          <textarea
+            id="text"
+            class="textarea"
+            placeholder='{"a":[1,2,3]}'
+            autocomplete="off"
+            spellcheck="false"
+            autocapitalize="off"
+          ></textarea>
+        </div>
+
+        <div class="section-block">
+          <div class="step-row">
+            <label for="file" class="btn">Upload file</label>
+            <span id="fileName">No file selected</span>
+          </div>
+          <div class="file-picker">
+            <input type="file" id="file" accept=".json,.yaml,.yml,application/json,application/x-yaml,text/yaml"/>
+
+          </div>
+        </div>
+      </section>
+
+      <section class="result-card">
+        <div class="result-header">
+          <div class="result-actions">
+            <button id="share" class="btn-icon" title="Share">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="lucide lucide-send-icon lucide-send">
+                <path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"/>
+                <path d="m21.854 2.147-10.94 10.939"/>
+              </svg>
+              <span class="copied-badge" aria-live="polite">Link copied</span>
+            </button>
+            <button id="clearResult" class="btn-icon" disabled title="Clear">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="lucide lucide-eraser-icon lucide-eraser">
+                <path d="M21 21H8a2 2 0 0 1-1.42-.587l-3.994-3.999a2 2 0 0 1 0-2.828l10-10a2 2 0 0 1 2.829 0l5.999 6a2 2 0 0 1 0 2.828L12.834 21"/>
+                <path d="m5.082 11.09 8.828 8.828"/>
+              </svg>
+            </button>
+            <button id="copy" class="btn-icon" disabled title="Copy">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect width="14" height="14" x="8" y="8" rx="2" ry="2"/>
+                <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>
+              </svg>
+              <span class="copied-badge">Copied</span>
+            </button>
+            <button id="download" class="btn-icon" disabled title="Download">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 15V3"/>
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <path d="m7 10 5 5 5-5"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+        <pre id="out" aria-live="polite"></pre>
+      </section>
+    </main>
+
+    <footer class="site-footer sticky" role="contentinfo">
+      <p class="footer-copy">
+        © Created by Osmel Nuñez Alonso ·
+        <a href="https://github.com/osmelonunez/data-fmt" class="footer-icon"
+           target="_blank" rel="noopener noreferrer" aria-label="View source on GitHub">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 .5C5.65.5.5 5.65.5 12c0 5.1 3.29 9.42 7.86 10.95.58.1.79-.25.79-.56v-2.17c-3.2.7-3.88-1.38-3.88-1.38-.52-1.32-1.27-1.67-1.27-1.67-1.04-.7.08-.69.08-.69 1.15.08 1.76 1.18 1.76 1.18 1.02 1.75 2.68 1.24 3.34.95.1-.74.4-1.24.72-1.52-2.55-.29-5.23-1.28-5.23-5.72 0-1.26.45-2.28 1.18-3.08-.12-.29-.51-1.46.11-3.04 0 0 .96-.31 3.15 1.18.91-.25 1.89-.38 2.86-.38.97 0 1.95.13 2.86.38 2.19-1.49 3.15-1.18 3.15-1.18.62 1.58.23 2.75.11 3.04.73.8 1.18 1.82 1.18 3.08 0 4.45-2.69 5.42-5.25 5.71.41.35.77 1.05.77 2.12v3.15c0 .31.21.67.8.56A10.98 10.98 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5z"/>
+          </svg>
+        </a>
+      </p>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    // Autoajuste de <textarea> sin sacar "Upload JSON" de la ventana
+    (function () {
+      const ta = document.getElementById('text');
+      const left = document.querySelector('.left');
+      const footer = document.querySelector('.site-footer');
+      if (!ta || !left) return;
+
+      const MIN_H = 150;
+      const VH_CAP = 0.8;
+      const BELOW_PAD = 24;
+
+      function getUploadBlock() {
+        const blocks = left.querySelectorAll('.section-block');
+        return blocks[blocks.length - 1] || null;
+      }
+
+      function maxAllowedHeight() {
+        const vpH = window.innerHeight;
+        const footerH = footer?.offsetHeight || 0;
+        const taRect = ta.getBoundingClientRect();
+        const upload = getUploadBlock();
+        const uploadH = upload ? upload.getBoundingClientRect().height : 0;
+
+        const visibleBelow = vpH - taRect.top - footerH - BELOW_PAD;
+        const reserveForUpload = uploadH + BELOW_PAD;
+        const viewportCap = Math.floor(vpH * VH_CAP);
+
+        return Math.max(MIN_H, Math.min(visibleBelow - reserveForUpload, viewportCap));
+      }
+
+      function autoresize() {
+        ta.style.height = 'auto';
+        const cap = maxAllowedHeight();
+        const desired = Math.max(MIN_H, Math.min(ta.scrollHeight, cap));
+        ta.style.height = desired + 'px';
+        ta.style.overflowY = (ta.scrollHeight > desired) ? 'auto' : 'hidden';
+      }
+
+      ['input', 'change'].forEach(evt => ta.addEventListener(evt, autoresize));
+      ta.addEventListener('paste', () => setTimeout(autoresize, 0));
+      window.addEventListener('resize', autoresize);
+      document.addEventListener('DOMContentLoaded', autoresize);
+
+      const clearBtn = document.getElementById('clear');
+      if (clearBtn) {
+        clearBtn.addEventListener('click', () => {
+          ta.value = '';
+          ta.style.height = MIN_H + 'px';
+          ta.style.overflowY = 'hidden';
+        });
+      }
+
+      autoresize();
+    })();
+  </script>
+</body>
+</html>
