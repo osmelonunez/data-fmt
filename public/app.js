@@ -246,25 +246,42 @@ function showBadge(btn, text, className = "badge") {
 }
 
 // Download
+
 downloadBtn.onclick = () => {
   if (downloadBtn.disabled) return;
   const txt = out.textContent || "";
   if (!txt.trim()) return;
-  let baseName = "result.json";
+
+  // Determinar tipo: preferir currentType, si no, detectar por contenido mostrado
+  let t = currentType;
+  if (!t) {
+    const guess = detectType(txt);
+    t = guess || 'json';
+  }
+
+  // Nombre base
+  let base = "result";
   if (fileInput.files.length > 0) {
     const original = fileInput.files[0].name;
-    const withoutExt = original.replace(/\.[^/.]+$/, "");
-    const ext = original.includes(".") ? original.split(".").pop() : "json";
-    baseName = `format_${withoutExt}.${ext}`;
+    base = original.replace(/\.[^/.]+$/, "") || "result";
+  } else if (originalName) {
+    base = originalName.replace(/\.[^/.]+$/, "") || "result";
   }
-  const blob = new Blob([txt], { type: "application/json" });
+
+  // Extensión y MIME por tipo
+  const ext = t === 'yaml' ? 'yaml' : 'json';
+  const mime = t === 'yaml' ? 'text/yaml' : 'application/json';
+  const fileName = `${base}.${ext}`;
+
+  const blob = new Blob([txt], { type: mime });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
-  a.href = url; a.download = baseName;
+  a.href = url; a.download = fileName;
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
   URL.revokeObjectURL(url);
   showBadge(downloadBtn, "Saved", "saved-badge");
 };
+;
 
 // Copy
 copyBtn.onclick = () => {

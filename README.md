@@ -70,35 +70,6 @@ make down
 
 ---
 
-## Roadmap (JSON & YAML)
-
-- [ ] **Validation feedback**  
-  Show clearer error messages when JSON/YAML is invalid (including line and column).
-
-- [ ] **YAML ↔ JSON toggle**  
-  Add a UI option to convert YAML to JSON and vice versa, not only format.
-
-- [ ] **Preserve YAML comments**  
-  Currently comments are lost during re-serialization; investigate ways to keep them.
-
-- [ ] **Schema validation (JSON Schema / OpenAPI)**  
-  Allow validating a JSON/YAML document against a defined schema.
-
-- [ ] **jq filter examples**  
-  Provide pre-defined filter snippets (e.g. `.users[] | .name`) for users unfamiliar with jq.
-
-- [ ] **Large file handling**  
-  Optimize processing of large files (streaming instead of loading everything into memory).
-
-- [ ] **YAML anchors/aliases support**  
-  Document or improve handling of anchors (`&`, `*`) and merges (`<<`).
-
-- [ ] **Better error recovery for YAML**  
-  Extend the sanitizer with more heuristics to fix tricky indentation issues.
-
-
----
-
 ## License
 
 This project is licensed under the **GNU General Public License v3.0**.  
