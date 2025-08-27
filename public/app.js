@@ -9,19 +9,52 @@ const shareBtn = document.getElementById("share");
 const pillJson = document.querySelector('.type-pill.json');
 const pillYaml = document.querySelector('.type-pill.yaml');
 
-function setTypeIndicator(type){
-  pillJson?.classList.remove('active');
-  pillYaml?.classList.remove('active');
-  if(type === 'json') pillJson?.classList.add('active');
-  if(type === 'yaml') pillYaml?.classList.add('active');
+function setTypeIndicator(type){ setType(type); }
+// ===== Detección del tipo en el textarea =====
+function looksLikeYaml(s) {
+  const hasDocMarker = /^\s*---\s*$/m.test(s);
+  const hasKeyColon = /^\s*[^#\-\s][\w\-".']+\s*:\s+/m.test(s);
+  const hasListDash = /^\s*-\s+\S+/m.test(s);
+  const hasBlockScalar = /:\s*[>|]/m.test(s);
+  const hasAnchors = /[*&][\w-]+/.test(s);
+  return hasDocMarker || hasKeyColon || hasListDash || hasBlockScalar || hasAnchors;
+}
+
+
+
+function detectType(raw) {
+  const s = raw?.trim?.() ?? "";
+  if (!s) return null;
+
+  // JSON objeto estricto: empieza con {, termina con }, y contiene al menos "clave": valor
+  const jsonObjectCandidate =
+    s.startsWith("{") &&
+    s.endsWith("}") &&
+    /"\s*[A-Za-z0-9_\-]+"\s*:/.test(s);
+
+  if (jsonObjectCandidate) {
+    try { JSON.parse(s); return "json"; } catch {}
+  }
+
+  // Si no cumple las reglas de JSON objeto, probamos YAML
+  if (looksLikeYaml(s)) return "yaml";
+
+  // Sin tipo claro
+  return null;
 }
 
 
 // Estado del tipo de dato actual
-let currentType = 'json';
+let currentType = null;
 
 function setType(t){
   currentType = t;
+  // pastillas visuales
+  pillJson?.classList.remove('active');
+  pillYaml?.classList.remove('active');
+  if (t === 'json') pillJson?.classList.add('active');
+  if (t === 'yaml') pillYaml?.classList.add('active');
+  // ARIA state
   document.getElementById('typeJson')?.setAttribute('aria-pressed', String(t==='json'));
   document.getElementById('typeYaml')?.setAttribute('aria-pressed', String(t==='yaml'));
 }
@@ -118,7 +151,8 @@ document.getElementById("clear").onclick = () => {
 
 // Clear Result: limpia Result + cache de archivo + type indicator
 clearResultBtn.onclick = () => {
-  out.textContent = "";
+  setType(null);
+out.textContent = "";
   fileNameEl.textContent = "No file selected";
   fileInput.value = "";
   originalRaw = "";
@@ -132,6 +166,7 @@ clearResultBtn.onclick = () => {
 
 // Al escribir en el textarea, formatear automáticamente y mostrar en Result
 const textArea = document.getElementById("text");
+
 textArea.addEventListener("input", async () => {
   fileInput.value = "";
   fileNameEl.textContent = "No file selected";
@@ -148,26 +183,37 @@ textArea.addEventListener("input", async () => {
     return;
   }
 
-  // Try JSON pretty locally
-  try {
-    const parsed = JSON.parse(raw);
-    out.textContent = JSON.stringify(parsed, null, 2);
-    setResultEnabled(true);
-    setTypeIndicator("json");
-    updateButtons();
-    return;
-  } catch {}
+  // Detección del tipo y activación de pastillas + estado
+  const guess = detectType(raw);
+  if (guess) setType(guess);
 
-  // Fallback: treat as YAML via backend
+  setLoading(true);
+  setResultEnabled(true);
+  updateButtons();
+
   try {
-    setLoading(true);
-    const r = await fetch(`/run?type=yaml`, {
+    // Primer intento con el tipo actual
+    const r1 = await fetch(`/run?type=${currentType}`, {
       method: "POST",
       headers: { "Content-Type": "text/plain" },
       body: raw
     });
-    const ok = await handleResponse(r);
-    setTypeIndicator(ok ? "yaml" : "json");
+    const ok1 = await handleResponse(r1);
+
+    if (!ok1) {
+      const alt = currentType === "json" ? "yaml" : "json";
+      const r2 = await fetch(`/run?type=${alt}`, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain" },
+        body: raw
+      });
+      const ok2 = await handleResponse(r2);
+      if (ok2) setType(alt);
+      if (!ok2) {
+        out.textContent = "⚠️ Invalid data";
+        setResultEnabled(false);
+      }
+    }
   } catch (e) {
     out.textContent = "⚠️ Invalid data";
     setResultEnabled(false);
@@ -342,6 +388,3 @@ setResultEnabled(false);
 // ===== Type toggle wiring =====
 document.getElementById('typeJson')?.addEventListener('click', ()=> setType('json'));
 document.getElementById('typeYaml')?.addEventListener('click', ()=> setType('yaml'));
-
-// Initial type
-setType('json');
