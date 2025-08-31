@@ -220,7 +220,9 @@ textArea.addEventListener("input", async () => {
       const { ok: ok2, err: err2 } = await handleResponse(r2);
       if (ok2) setType(alt);
       if (!ok2) {
-        out.textContent = `Error: ${err2 || err1 || "Invalid data"}`;
+
+        out.textContent = `Error: ${err1 || err2 || "Invalid data"}`;
+
         setResultEnabled(false);
       }
     }
