@@ -49,6 +49,18 @@ make up
 make down
 ```
 
+### Run backend tests
+```bash
+cd backend
+npm test
+```
+The test suite uses Node's built-in `node:test` runner.
+It currently verifies:
+
+- Normalization of spaces and tabs
+- Consistent list formatting
+- Proper indentation for list children
+
 ---
 
 ## Features
