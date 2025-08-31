@@ -49,6 +49,17 @@ make up
 make down
 ```
 
+### Run backend tests
+```bash
+cd backend
+npm test
+```
+The YAML sanitization tests cover:
+
+- Normalization of spaces and tabs
+- Consistent list formatting
+- Proper indentation for list children
+
 ---
 
 ## Features
