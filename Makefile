@@ -2,12 +2,13 @@
 
 # build from scratch (ignore cache)
 build:
-	docker compose -f ops/docker-compose.yml build --no-cache
+	docker build --no-cache -t data-fmt -f ops/Dockerfile .
 
 # start containers without building (uses prebuilt image)
 up:
-	docker compose up -d
+	docker build --no-cache -t data-fmt -f ops/Dockerfile .
+	docker compose -f ops/docker-compose.yml up -d
 
 # stop and remove containers
 down:
-	docker compose down
+	docker compose -f ops/docker-compose.yml down

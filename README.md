@@ -57,7 +57,7 @@ npm test
 
 Or run them inside the built image:
 ```bash
-docker run --rm -it -w /app/backend ghcr.io/osmelonunez/data-fmt npm test
+docker run --rm -it -w /app/backend data-fmt npm test
 ```
 
 The test suite uses Node's built-in `node:test` runner.

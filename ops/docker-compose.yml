@@ -2,9 +2,6 @@ services:
   data-fmt:
     container_name: data-fmt
     image: data-fmt
-    build:
-      context: ..
-      dockerfile: ops/Dockerfile
     ports:
       - "8080:8080"
     restart: unless-stopped
