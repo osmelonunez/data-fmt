@@ -107,3 +107,9 @@ You are free to use, modify, and distribute it, but any distribution must remain
 See the full text in [LICENSE](./LICENSE).
 
 ---
+
+## Acknowledgments
+
+This application was developed with the help of **ChatGPT Codex**.
+
+---
