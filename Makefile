@@ -2,15 +2,15 @@
 
 # build image using cache
 build:
-        docker build -t data-fmt -f ops/Dockerfile .
+	docker build -t data-fmt -f ops/Dockerfile .
 
 # rebuild from scratch (ignore cache)
 rebuild:
-        docker build --no-cache -t data-fmt -f ops/Dockerfile .
+	docker build --no-cache -t data-fmt -f ops/Dockerfile .
 
 # start containers using existing image
 up:
-        docker compose -f ops/docker-compose.yml up -d
+	docker compose -f ops/docker-compose.yml up -d
 
 # stop and remove containers
 down:
