@@ -54,7 +54,9 @@ make down
 cd backend
 npm test
 ```
-The YAML sanitization tests cover:
+
+The test suite uses Node's built-in `node:test` runner.
+It currently verifies:
 
 - Normalization of spaces and tabs
 - Consistent list formatting

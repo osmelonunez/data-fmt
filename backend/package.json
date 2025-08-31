@@ -5,7 +5,7 @@
   "type": "commonjs",
   "scripts": {
     "start": "node server.js",
-    "test": "jest"
+    "test": "node --test"
   },
   "dependencies": {
     "cors": "^2.8.5",
