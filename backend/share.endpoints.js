@@ -8,6 +8,7 @@ const { randomBytes } = require('crypto');
 module.exports = function initShareEndpoints(app){
   const shares = new Map(); // id -> { data, createdAt }
   const TTL_MS = 1000 * 60 * 60 * 24; // expire shares after 24h
+  const MAX_LEN = 300 * 1024; // 300 KB
 
   function genId(n = 10){
     return randomBytes(n).toString('base64').replace(/[+/=]/g, '').slice(0, n);
@@ -24,6 +25,9 @@ module.exports = function initShareEndpoints(app){
   app.post('/share', (req, res) => {
     const data = typeof req.body?.data === 'string' ? req.body.data : '';
     if (!data) return res.status(400).json({ error: 'data required' });
+    if (data.length > MAX_LEN) {
+      return res.status(400).json({ error: 'data too large (max 300KB)' });
+    }
     const id = genId(10);
     shares.set(id, { data, createdAt: Date.now() });
     res.json({ id });

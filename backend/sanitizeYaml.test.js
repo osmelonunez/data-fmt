@@ -16,4 +16,3 @@ test('reindenta hijos de lista', () => {
   const raw = '- item\n key:val\n';
   assert.strictEqual(sanitizeYaml(raw), '- item\n  key: val\n');
 });
-

@@ -54,6 +54,7 @@ make down
 cd backend
 npm test
 ```
+
 The test suite uses Node's built-in `node:test` runner.
 It currently verifies:
 
@@ -68,7 +69,7 @@ It currently verifies:
 - ✅ Format and transform **JSON** with jq  
 - ✅ Format and transform **YAML** with js-yaml + jq  
 - ✅ Copy, download, or upload data files
-- ✅ Share formatted results via URL (links expire after 24 h)
+- ✅ Share formatted results via URL (links expire after 24 h; max 300 KB)
 - ✅ Modern, responsive UI
 - 🔒 Your data is processed inside a local container  
 
