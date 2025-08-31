@@ -1,7 +1,7 @@
 services:
   data-fmt:
     container_name: data-fmt
-    image: ghcr.io/osmelonunez/data-fmt
+    image: data-fmt
     build:
       context: ..
       dockerfile: ops/Dockerfile
