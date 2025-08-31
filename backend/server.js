@@ -114,8 +114,16 @@ app.post("/run", upload.single("file"), async (req, res) => {
 
     res.type("text/plain").send(outText);
   } catch (e) {
-    console.error("Error in /run:", e);
-    res.status(400).json({ error: e.message || "process error" });
+
+    let msg = e.message || "process error";
+    if (e?.reason && typeof e?.mark?.line === "number" && typeof e?.mark?.column === "number") {
+      msg = `${e.reason} at line ${e.mark.line + 1}, column ${e.mark.column + 1}`;
+      console.error(`Error in /run: ${msg}`);
+    } else {
+      console.error("Error in /run:", e.message || e);
+    }
+    res.status(400).json({ error: msg });
+
   }
 });
 
