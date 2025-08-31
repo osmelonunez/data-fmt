@@ -1,3 +1,9 @@
+import { initTheme } from './theme.js';
+import { initShare } from './share.js';
+import { initAutoResize } from './autoResize.js';
+
+initTheme();
+
 const out = document.getElementById("out");
 const fileInput = document.getElementById("file");
 const fileNameEl = document.getElementById("fileName");
@@ -152,7 +158,7 @@ document.getElementById("clear").onclick = () => {
 // Clear Result: limpia Result + cache de archivo + type indicator
 clearResultBtn.onclick = () => {
   setType(null);
-out.textContent = "";
+  out.textContent = "";
   fileNameEl.textContent = "No file selected";
   fileInput.value = "";
   originalRaw = "";
@@ -308,99 +314,8 @@ function updateButtons() {
 updateButtons();
 setResultEnabled(false);
 
-
-// ===== Theme control =====
-(function(){
-  const root = document.documentElement;
-  const systemQuery = window.matchMedia('(prefers-color-scheme: dark)');
-  const btnSystem = document.getElementById('themeSystem');
-  const btnDark = document.getElementById('themeDark');
-  const btnLight = document.getElementById('themeLight');
-
-  function apply(theme){
-    localStorage.setItem('theme', theme);
-    root.dataset.theme = theme; // optional hook
-    if(theme === 'system'){
-      setDark(systemQuery.matches);
-    }else if(theme === 'dark'){
-      setDark(true);
-    }else{
-      setDark(false);
-    }
-    updatePressed(theme);
-  }
-
-  function setDark(on){
-    root.classList.toggle('dark', !!on);
-  }
-
-  function updatePressed(theme){
-    [btnSystem, btnDark, btnLight].forEach(b=> b && b.setAttribute('aria-pressed','false'));
-    const map = {system:btnSystem, dark:btnDark, light:btnLight};
-    if(map[theme]) map[theme].setAttribute('aria-pressed','true');
-  }
-
-  // listen to system changes when on system mode
-  systemQuery.addEventListener('change', e => {
-    if(localStorage.getItem('theme') === 'system'){
-      setDark(e.matches);
-    }
-  });
-
-  // wire buttons
-  btnSystem?.addEventListener('click', ()=>apply('system'));
-  btnDark?.addEventListener('click', ()=>apply('dark'));
-  btnLight?.addEventListener('click', ()=>apply('light'));
-
-  // initial
-  const saved = localStorage.getItem('theme') || 'system';
-  apply(saved);
-})();
-
-// ===== Share link via backend =====
-(function(){
-  const btnShare = document.getElementById('share');
-  const out = document.getElementById('out');
-
-  // API siempre en el mismo origen/puerto que la UI
-  const API = '';
-
-  btnShare?.addEventListener('click', async () => {
-    try{
-      const res = await fetch(`${API}/share`, {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ data: out.textContent })
-      });
-      if(!res.ok) throw new Error('share failed');
-      const { id } = await res.json();
-      const url = `${location.origin}${location.pathname}#id=${id}`;
-      await navigator.clipboard.writeText(url);
-    
-      // Mostrar badge en el botón
-      btnShare.classList.add('show-badge');
-      setTimeout(()=> btnShare.classList.remove('show-badge'), 1200);
-    }catch(e){
-      console.error(e);
-    }
-  });
-
-  // Cargar por id si existe en el hash
-  window.addEventListener('DOMContentLoaded', async ()=>{
-    const m = location.hash.match(/#id=([\w-]+)/);
-    if(!m) return;
-    try{
-      const res = await fetch(`${API}/share/${m[1]}`);
-      if(!res.ok) return;
-      const { data } = await res.json();
-      out.textContent = data || '';
-      setResultEnabled(!!data?.trim?.());
-    }catch(e){ 
-      console.error(e); 
-    }
-  });
-})();
-
+initShare(out, setResultEnabled);
+initAutoResize();
 
 // ===== Type toggle wiring =====
 document.getElementById('typeJson')?.addEventListener('click', ()=> setType('json'));
