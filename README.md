@@ -55,8 +55,9 @@ make down
 
 - ✅ Format and transform **JSON** with jq  
 - ✅ Format and transform **YAML** with js-yaml + jq  
-- ✅ Copy, download, or upload data files  
-- ✅ Modern, responsive UI  
+- ✅ Copy, download, or upload data files
+- ✅ Share formatted results via URL (links expire after 24 h)
+- ✅ Modern, responsive UI
 - 🔒 Your data is processed inside a local container  
 
 ---
