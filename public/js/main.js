@@ -116,7 +116,7 @@ fileInput?.addEventListener("change", async (e) => {
   out.textContent = "";
   fileNameEl.textContent = f ? f.name : "No file selected";
   originalRaw = "";
-  originalName = "";
+  originalName = f ? f.name : "";
   setResultEnabled(false);
   if (!f) return;
 
@@ -273,10 +273,7 @@ downloadBtn.onclick = () => {
 
   // Nombre base
   let base = "result";
-  if (fileInput.files.length > 0) {
-    const original = fileInput.files[0].name;
-    base = original.replace(/\.[^/.]+$/, "") || "result";
-  } else if (originalName) {
+  if (originalName) {
     base = originalName.replace(/\.[^/.]+$/, "") || "result";
   }
 
