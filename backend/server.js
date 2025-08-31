@@ -90,6 +90,7 @@ app.post("/run", upload.single("file"), async (req, res) => {
     if (req.file?.originalname && /\.ya?ml$/i.test(req.file.originalname)) type = "yaml";
 
     const filter = req.query.filter || ".";
+    console.log(`Run request type=${type}, filter=${filter}`);
     const body = req.file ? req.file.buffer.toString("utf8") : (req.body || "");
     if (!body.trim()) return res.status(400).json({ error: "empty body" });
 
@@ -113,6 +114,7 @@ app.post("/run", upload.single("file"), async (req, res) => {
 
     res.type("text/plain").send(outText);
   } catch (e) {
+    console.error("Error in /run:", e);
     res.status(400).json({ error: e.message || "process error" });
   }
 });
