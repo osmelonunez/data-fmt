@@ -6,6 +6,7 @@ const multer = require("multer");
 const { spawn } = require("child_process");
 const path = require("path");
 const yaml = require("js-yaml");
+const sanitizeYaml = require("./sanitizeYaml");
 
 const app = express();
 const upload = multer({ limits: { fileSize: 5 * 1024 * 1024 } });
@@ -39,49 +40,6 @@ function runJq(input, filter = ".") {
   });
 }
 
-function sanitizeYaml(raw){
-  // Normaliza saltos y tabs
-  let text = raw.replace(/\r\n?/g, '\n').replace(/\t/g, '  ');
-  const lines = text.split('\n');
-  const out = [];
-  let i = 0;
-
-  while (i < lines.length){
-    let ln = lines[i];
-    ln = ln.replace(/[ \t]+$/,'');                         // quita espacios al final
-    ln = ln.replace(/^(\s*[^:\n]+:)(\S)/, (_, a, b) => a+' '+b); // espacio tras ':'
-    ln = ln.replace(/^(\s*)-\s+/, '$1- ');                 // "-   x" -> "- x"
-    out.push(ln);
-
-    // Reindent hijos de items de lista
-    const m = ln.match(/^(\s*)-\s+\S/);
-    if (m){
-      const base = m[1].length;
-      const childIndent = base + 2;
-      let j = i + 1;
-      while (j < lines.length){
-        let nxt = lines[j];
-        if (!nxt.trim()){ out.push(nxt.replace(/[ \t]+$/,'')); j++; continue; }
-        const isItem = nxt.match(/^(\s*)-\s+\S/);
-        const curInd = (nxt.match(/^(\s*)/) || ['',''])[1].length;
-        if ((isItem && curInd <= base) || (!isItem && curInd <= base)) break;
-
-        if (/^\s*[^:\n]+:/.test(nxt)){                    // clave bajo el item
-          const trimmed = nxt.trimStart();
-          nxt = ' '.repeat(childIndent) + trimmed;
-          nxt = nxt.replace(/^(\s*[^:\n]+:)(\S)/, (_, a, b) => a+' '+b);
-        }
-        out.push(nxt.replace(/[ \t]+$/,''));
-        j++;
-      }
-      i = j;
-      continue;
-    }
-    i++;
-  }
-  return out.join('\n');
-}
-
 // API principal
 app.post("/run", upload.single("file"), async (req, res) => {
   try {
@@ -90,6 +48,7 @@ app.post("/run", upload.single("file"), async (req, res) => {
     if (req.file?.originalname && /\.ya?ml$/i.test(req.file.originalname)) type = "yaml";
 
     const filter = req.query.filter || ".";
+    console.log(`Run request type=${type}, filter=${filter}`);
     const body = req.file ? req.file.buffer.toString("utf8") : (req.body || "");
     if (!body.trim()) return res.status(400).json({ error: "empty body" });
 
@@ -113,7 +72,16 @@ app.post("/run", upload.single("file"), async (req, res) => {
 
     res.type("text/plain").send(outText);
   } catch (e) {
-    res.status(400).json({ error: e.message || "process error" });
+
+    let msg = e.message || "process error";
+    if (e?.reason && typeof e?.mark?.line === "number" && typeof e?.mark?.column === "number") {
+      msg = `${e.reason} at line ${e.mark.line + 1}, column ${e.mark.column + 1}`;
+      console.error(`Error in /run: ${msg}`);
+    } else {
+      console.error("Error in /run:", e.message || e);
+    }
+    res.status(400).json({ error: msg });
+
   }
 });
 

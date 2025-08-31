@@ -1,3 +1,9 @@
+import { initTheme } from './theme.js';
+import { initShare } from './share.js';
+import { initAutoResize } from './autoResize.js';
+
+initTheme();
+
 const out = document.getElementById("out");
 const fileInput = document.getElementById("file");
 const fileNameEl = document.getElementById("fileName");
@@ -9,19 +15,52 @@ const shareBtn = document.getElementById("share");
 const pillJson = document.querySelector('.type-pill.json');
 const pillYaml = document.querySelector('.type-pill.yaml');
 
-function setTypeIndicator(type){
-  pillJson?.classList.remove('active');
-  pillYaml?.classList.remove('active');
-  if(type === 'json') pillJson?.classList.add('active');
-  if(type === 'yaml') pillYaml?.classList.add('active');
+function setTypeIndicator(type){ setType(type); }
+// ===== Detección del tipo en el textarea =====
+function looksLikeYaml(s) {
+  const hasDocMarker = /^\s*---\s*$/m.test(s);
+  const hasKeyColon = /^\s*[^#\-\s][\w\-".']+\s*:\s+/m.test(s);
+  const hasListDash = /^\s*-\s+\S+/m.test(s);
+  const hasBlockScalar = /:\s*[>|]/m.test(s);
+  const hasAnchors = /[*&][\w-]+/.test(s);
+  return hasDocMarker || hasKeyColon || hasListDash || hasBlockScalar || hasAnchors;
+}
+
+
+
+function detectType(raw) {
+  const s = raw?.trim?.() ?? "";
+  if (!s) return null;
+
+  // JSON objeto estricto: empieza con {, termina con }, y contiene al menos "clave": valor
+  const jsonObjectCandidate =
+    s.startsWith("{") &&
+    s.endsWith("}") &&
+    /"\s*[A-Za-z0-9_\-]+"\s*:/.test(s);
+
+  if (jsonObjectCandidate) {
+    try { JSON.parse(s); return "json"; } catch {}
+  }
+
+  // Si no cumple las reglas de JSON objeto, probamos YAML
+  if (looksLikeYaml(s)) return "yaml";
+
+  // Sin tipo claro
+  return null;
 }
 
 
 // Estado del tipo de dato actual
-let currentType = 'json';
+let currentType = null;
 
 function setType(t){
   currentType = t;
+  // pastillas visuales
+  pillJson?.classList.remove('active');
+  pillYaml?.classList.remove('active');
+  if (t === 'json') pillJson?.classList.add('active');
+  if (t === 'yaml') pillYaml?.classList.add('active');
+  // ARIA state
   document.getElementById('typeJson')?.setAttribute('aria-pressed', String(t==='json'));
   document.getElementById('typeYaml')?.setAttribute('aria-pressed', String(t==='yaml'));
 }
@@ -57,14 +96,14 @@ function pretty(jsonText) {
 async function handleResponse(r) {
   const text = await r.text();
   if (!r.ok) {
-    try { const j = JSON.parse(text); out.textContent = "Error: " + (j.error || text); }
-    catch { out.textContent = `HTTP ${r.status}: ${text}`; }
-    setResultEnabled(false);
-    return false;
+    let err;
+    try { const j = JSON.parse(text); err = j.error || text; }
+    catch { err = `HTTP ${r.status}: ${text}`; }
+    return { ok: false, err };
   }
   out.textContent = text;
   setResultEnabled(Boolean(text.trim()));
-  return true;
+  return { ok: true };
 }
 
 // Autoformateo al elegir archivo (sin filtro)
@@ -77,7 +116,7 @@ fileInput?.addEventListener("change", async (e) => {
   out.textContent = "";
   fileNameEl.textContent = f ? f.name : "No file selected";
   originalRaw = "";
-  originalName = "";
+  originalName = f ? f.name : "";
   setResultEnabled(false);
   if (!f) return;
 
@@ -94,7 +133,11 @@ fileInput?.addEventListener("change", async (e) => {
   try {
     const url = `/run?type=${currentType}`; // ← ya actualizado por setTypeIndicator
     const r = await fetch(url, { method: "POST", body: fd });
-    await handleResponse(r);
+    const { ok, err } = await handleResponse(r);
+    if (!ok) {
+      out.textContent = `Error: ${err || "Invalid data"}`;
+      setResultEnabled(false);
+    }
   } finally {
     setLoading(false);
   }
@@ -118,6 +161,7 @@ document.getElementById("clear").onclick = () => {
 
 // Clear Result: limpia Result + cache de archivo + type indicator
 clearResultBtn.onclick = () => {
+  setType(null);
   out.textContent = "";
   fileNameEl.textContent = "No file selected";
   fileInput.value = "";
@@ -132,6 +176,7 @@ clearResultBtn.onclick = () => {
 
 // Al escribir en el textarea, formatear automáticamente y mostrar en Result
 const textArea = document.getElementById("text");
+
 textArea.addEventListener("input", async () => {
   fileInput.value = "";
   fileNameEl.textContent = "No file selected";
@@ -148,28 +193,41 @@ textArea.addEventListener("input", async () => {
     return;
   }
 
-  // Try JSON pretty locally
-  try {
-    const parsed = JSON.parse(raw);
-    out.textContent = JSON.stringify(parsed, null, 2);
-    setResultEnabled(true);
-    setTypeIndicator("json");
-    updateButtons();
-    return;
-  } catch {}
+  // Detección del tipo y activación de pastillas + estado
+  const guess = detectType(raw);
+  if (guess) setType(guess);
 
-  // Fallback: treat as YAML via backend
+  setLoading(true);
+  setResultEnabled(true);
+  updateButtons();
+
   try {
-    setLoading(true);
-    const r = await fetch(`/run?type=yaml`, {
+    // Primer intento con el tipo actual
+    const r1 = await fetch(`/run?type=${currentType}`, {
       method: "POST",
       headers: { "Content-Type": "text/plain" },
       body: raw
     });
-    const ok = await handleResponse(r);
-    setTypeIndicator(ok ? "yaml" : "json");
+    const { ok: ok1, err: err1 } = await handleResponse(r1);
+
+    if (!ok1) {
+      const alt = currentType === "json" ? "yaml" : "json";
+      const r2 = await fetch(`/run?type=${alt}`, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain" },
+        body: raw
+      });
+      const { ok: ok2, err: err2 } = await handleResponse(r2);
+      if (ok2) setType(alt);
+      if (!ok2) {
+
+        out.textContent = `Error: ${err1 || err2 || "Invalid data"}`;
+
+        setResultEnabled(false);
+      }
+    }
   } catch (e) {
-    out.textContent = "⚠️ Invalid data";
+    out.textContent = `Error: ${e.message || "Invalid data"}`;
     setResultEnabled(false);
   } finally {
     setLoading(false);
@@ -200,25 +258,39 @@ function showBadge(btn, text, className = "badge") {
 }
 
 // Download
+
 downloadBtn.onclick = () => {
   if (downloadBtn.disabled) return;
   const txt = out.textContent || "";
   if (!txt.trim()) return;
-  let baseName = "result.json";
-  if (fileInput.files.length > 0) {
-    const original = fileInput.files[0].name;
-    const withoutExt = original.replace(/\.[^/.]+$/, "");
-    const ext = original.includes(".") ? original.split(".").pop() : "json";
-    baseName = `format_${withoutExt}.${ext}`;
+
+  // Determinar tipo: preferir currentType, si no, detectar por contenido mostrado
+  let t = currentType;
+  if (!t) {
+    const guess = detectType(txt);
+    t = guess || 'json';
   }
-  const blob = new Blob([txt], { type: "application/json" });
+
+  // Nombre base
+  let base = "result";
+  if (originalName) {
+    base = originalName.replace(/\.[^/.]+$/, "") || "result";
+  }
+
+  // Extensión y MIME por tipo
+  const ext = t === 'yaml' ? 'yaml' : 'json';
+  const mime = t === 'yaml' ? 'text/yaml' : 'application/json';
+  const fileName = `${base}.${ext}`;
+
+  const blob = new Blob([txt], { type: mime });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
-  a.href = url; a.download = baseName;
+  a.href = url; a.download = fileName;
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
   URL.revokeObjectURL(url);
   showBadge(downloadBtn, "Saved", "saved-badge");
 };
+;
 
 // Copy
 copyBtn.onclick = () => {
@@ -245,103 +317,9 @@ function updateButtons() {
 updateButtons();
 setResultEnabled(false);
 
-
-// ===== Theme control =====
-(function(){
-  const root = document.documentElement;
-  const systemQuery = window.matchMedia('(prefers-color-scheme: dark)');
-  const btnSystem = document.getElementById('themeSystem');
-  const btnDark = document.getElementById('themeDark');
-  const btnLight = document.getElementById('themeLight');
-
-  function apply(theme){
-    localStorage.setItem('theme', theme);
-    root.dataset.theme = theme; // optional hook
-    if(theme === 'system'){
-      setDark(systemQuery.matches);
-    }else if(theme === 'dark'){
-      setDark(true);
-    }else{
-      setDark(false);
-    }
-    updatePressed(theme);
-  }
-
-  function setDark(on){
-    root.classList.toggle('dark', !!on);
-  }
-
-  function updatePressed(theme){
-    [btnSystem, btnDark, btnLight].forEach(b=> b && b.setAttribute('aria-pressed','false'));
-    const map = {system:btnSystem, dark:btnDark, light:btnLight};
-    if(map[theme]) map[theme].setAttribute('aria-pressed','true');
-  }
-
-  // listen to system changes when on system mode
-  systemQuery.addEventListener('change', e => {
-    if(localStorage.getItem('theme') === 'system'){
-      setDark(e.matches);
-    }
-  });
-
-  // wire buttons
-  btnSystem?.addEventListener('click', ()=>apply('system'));
-  btnDark?.addEventListener('click', ()=>apply('dark'));
-  btnLight?.addEventListener('click', ()=>apply('light'));
-
-  // initial
-  const saved = localStorage.getItem('theme') || 'system';
-  apply(saved);
-})();
-
-// ===== Share link via backend =====
-(function(){
-  const btnShare = document.getElementById('share');
-  const out = document.getElementById('out');
-
-  // API siempre en el mismo origen/puerto que la UI
-  const API = '';
-
-  btnShare?.addEventListener('click', async () => {
-    try{
-      const res = await fetch(`${API}/share`, {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ data: out.textContent })
-      });
-      if(!res.ok) throw new Error('share failed');
-      const { id } = await res.json();
-      const url = `${location.origin}${location.pathname}#id=${id}`;
-      await navigator.clipboard.writeText(url);
-    
-      // Mostrar badge en el botón
-      btnShare.classList.add('show-badge');
-      setTimeout(()=> btnShare.classList.remove('show-badge'), 1200);
-    }catch(e){
-      console.error(e);
-    }
-  });
-
-  // Cargar por id si existe en el hash
-  window.addEventListener('DOMContentLoaded', async ()=>{
-    const m = location.hash.match(/#id=([\w-]+)/);
-    if(!m) return;
-    try{
-      const res = await fetch(`${API}/share/${m[1]}`);
-      if(!res.ok) return;
-      const { data } = await res.json();
-      out.textContent = data || '';
-      setResultEnabled(!!data?.trim?.());
-    }catch(e){ 
-      console.error(e); 
-    }
-  });
-})();
-
+initShare(out, setResultEnabled);
+initAutoResize();
 
 // ===== Type toggle wiring =====
 document.getElementById('typeJson')?.addEventListener('click', ()=> setType('json'));
 document.getElementById('typeYaml')?.addEventListener('click', ()=> setType('yaml'));
-
-// Initial type
-setType('json');

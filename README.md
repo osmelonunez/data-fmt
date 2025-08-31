@@ -32,10 +32,20 @@ Everything runs inside **Docker**, so you don’t need to install Node or jq on 
 ## How to run
 
 Use the `Makefile` at the root of the project.
+Before running the containers, copy the example environment file:
 
-### Clean build
+```bash
+cp backend/.env.example backend/.env
+```
+
+### Build image
 ```bash
 make build
+```
+
+### Rebuild from scratch
+```bash
+make rebuild
 ```
 
 ### Start using an already built image
@@ -49,14 +59,33 @@ make up
 make down
 ```
 
+### Run backend tests
+```bash
+cd backend
+npm test
+```
+
+Or run them inside the built image:
+```bash
+docker run --rm -it -w /app/backend data-fmt npm test
+```
+
+The test suite uses Node's built-in `node:test` runner.
+It currently verifies:
+
+- Normalization of spaces and tabs
+- Consistent list formatting
+- Proper indentation for list children
+
 ---
 
 ## Features
 
 - ✅ Format and transform **JSON** with jq  
 - ✅ Format and transform **YAML** with js-yaml + jq  
-- ✅ Copy, download, or upload data files  
-- ✅ Modern, responsive UI  
+- ✅ Copy, download, or upload data files
+- ✅ Share formatted results via URL (persisted on disk; TTL and size configurable, defaults 24 h/300 KB)
+- ✅ Modern, responsive UI
 - 🔒 Your data is processed inside a local container  
 
 ---
@@ -70,40 +99,17 @@ make down
 
 ---
 
-## Roadmap (JSON & YAML)
-
-- [ ] **Validation feedback**  
-  Show clearer error messages when JSON/YAML is invalid (including line and column).
-
-- [ ] **YAML ↔ JSON toggle**  
-  Add a UI option to convert YAML to JSON and vice versa, not only format.
-
-- [ ] **Preserve YAML comments**  
-  Currently comments are lost during re-serialization; investigate ways to keep them.
-
-- [ ] **Schema validation (JSON Schema / OpenAPI)**  
-  Allow validating a JSON/YAML document against a defined schema.
-
-- [ ] **jq filter examples**  
-  Provide pre-defined filter snippets (e.g. `.users[] | .name`) for users unfamiliar with jq.
-
-- [ ] **Large file handling**  
-  Optimize processing of large files (streaming instead of loading everything into memory).
-
-- [ ] **YAML anchors/aliases support**  
-  Document or improve handling of anchors (`&`, `*`) and merges (`<<`).
-
-- [ ] **Better error recovery for YAML**  
-  Extend the sanitizer with more heuristics to fix tricky indentation issues.
-
-
----
-
 ## License
 
 This project is licensed under the **GNU General Public License v3.0**.  
 You are free to use, modify, and distribute it, but any distribution must remain under the same GPLv3 license.  
 
 See the full text in [LICENSE](./LICENSE).
+
+---
+
+## Acknowledgments
+
+This application was developed with the help of **ChatGPT Codex**.
 
 ---
