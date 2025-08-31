@@ -5,7 +5,9 @@ WORKDIR /app/backend
 
 # Install backend dependencies
 COPY backend/package*.json ./
-RUN npm ci --omit=dev && npm cache clean --force
+
+RUN (npm ci --omit=dev || npm install --omit=dev) \
+  && npm cache clean --force
 
 # Copy backend source
 COPY backend .
