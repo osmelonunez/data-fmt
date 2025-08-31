@@ -207,18 +207,26 @@ html, body {
   left: 0;
   width: 100%;
   height: 100%;
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 14px;
+  background: rgba(0,0,0,.45);
   display: none;
   justify-content: center;
   align-items: center;
-  text-align: center;
-  padding: 24px;
   z-index: 100;
 }
 
 .info-overlay.show { display: flex; }
+
+.info-content {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  width: 90%;
+  max-width: 400px;
+  text-align: left;
+}
+
+.info-content h2 { margin-top: 0; }
 
 /* En tema oscuro usa el panel como fondo pero también sin borde */
 :root.dark #out{
