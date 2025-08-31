@@ -32,10 +32,20 @@ Everything runs inside **Docker**, so you don’t need to install Node or jq on 
 ## How to run
 
 Use the `Makefile` at the root of the project.
+Before running the containers, copy the example environment file:
 
-### Clean build
+```bash
+cp backend/.env.example backend/.env
+```
+
+### Build image
 ```bash
 make build
+```
+
+### Rebuild from scratch
+```bash
+make rebuild
 ```
 
 ### Start using an already built image
@@ -74,7 +84,7 @@ It currently verifies:
 - ✅ Format and transform **JSON** with jq  
 - ✅ Format and transform **YAML** with js-yaml + jq  
 - ✅ Copy, download, or upload data files
-- ✅ Share formatted results via URL (links expire after 24 h; max 300 KB)
+- ✅ Share formatted results via URL (persisted on disk; TTL and size configurable, defaults 24 h/300 KB)
 - ✅ Modern, responsive UI
 - 🔒 Your data is processed inside a local container  
 

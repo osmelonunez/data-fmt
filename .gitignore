@@ -3,3 +3,9 @@
 
 # Node
 node_modules/
+
+# Environment variables
+*.env
+
+# Share data persistence file
+backend/shares.json
