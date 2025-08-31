@@ -96,14 +96,14 @@ function pretty(jsonText) {
 async function handleResponse(r) {
   const text = await r.text();
   if (!r.ok) {
-    try { const j = JSON.parse(text); out.textContent = "Error: " + (j.error || text); }
-    catch { out.textContent = `HTTP ${r.status}: ${text}`; }
-    setResultEnabled(false);
-    return false;
+    let err;
+    try { const j = JSON.parse(text); err = j.error || text; }
+    catch { err = `HTTP ${r.status}: ${text}`; }
+    return { ok: false, err };
   }
   out.textContent = text;
   setResultEnabled(Boolean(text.trim()));
-  return true;
+  return { ok: true };
 }
 
 // Autoformateo al elegir archivo (sin filtro)
@@ -133,7 +133,11 @@ fileInput?.addEventListener("change", async (e) => {
   try {
     const url = `/run?type=${currentType}`; // ← ya actualizado por setTypeIndicator
     const r = await fetch(url, { method: "POST", body: fd });
-    await handleResponse(r);
+    const { ok, err } = await handleResponse(r);
+    if (!ok) {
+      out.textContent = `Error: ${err || "Invalid data"}`;
+      setResultEnabled(false);
+    }
   } finally {
     setLoading(false);
   }
@@ -204,7 +208,7 @@ textArea.addEventListener("input", async () => {
       headers: { "Content-Type": "text/plain" },
       body: raw
     });
-    const ok1 = await handleResponse(r1);
+    const { ok: ok1, err: err1 } = await handleResponse(r1);
 
     if (!ok1) {
       const alt = currentType === "json" ? "yaml" : "json";
@@ -213,15 +217,15 @@ textArea.addEventListener("input", async () => {
         headers: { "Content-Type": "text/plain" },
         body: raw
       });
-      const ok2 = await handleResponse(r2);
+      const { ok: ok2, err: err2 } = await handleResponse(r2);
       if (ok2) setType(alt);
       if (!ok2) {
-        out.textContent = "⚠️ Invalid data";
+        out.textContent = `Error: ${err2 || err1 || "Invalid data"}`;
         setResultEnabled(false);
       }
     }
   } catch (e) {
-    out.textContent = "⚠️ Invalid data";
+    out.textContent = `Error: ${e.message || "Invalid data"}`;
     setResultEnabled(false);
   } finally {
     setLoading(false);
