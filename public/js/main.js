@@ -12,6 +12,19 @@ const copyBtn = document.getElementById("copy");
 const clearResultBtn = document.getElementById("clearResult");
 const shareBtn = document.getElementById("share");
 
+const infoBtn = document.getElementById("info");
+const infoOverlay = document.getElementById("infoOverlay");
+
+infoBtn?.addEventListener("mouseenter", () => {
+  infoOverlay?.classList.add("show");
+});
+infoOverlay?.addEventListener("mouseleave", () => {
+  infoOverlay.classList.remove("show");
+});
+infoOverlay?.addEventListener("click", () => {
+  infoOverlay.classList.remove("show");
+});
+
 const pillJson = document.querySelector('.type-pill.json');
 const pillYaml = document.querySelector('.type-pill.yaml');
 

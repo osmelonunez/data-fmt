@@ -13,7 +13,14 @@
         <h1 class="brand">data-fmt</h1>
         <p class="tagline">Format and transform structured data</p>
         <div class="spacer"></div>
-          <div class="theme-toggle" role="group" aria-label="Theme selection">
+        <button id="info" class="btn-icon" aria-label="About" title="About">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="16" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+          </svg>
+        </button>
+        <div class="theme-toggle" role="group" aria-label="Theme selection">
             <!-- Button: follow system theme -->
             <button id="themeSystem" class="btn-icon" aria-label="Use system theme" title="System">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -131,7 +138,7 @@ formats:
       </section>
     </main>
 
-    <footer class="site-footer sticky" role="contentinfo">
+  <footer class="site-footer sticky" role="contentinfo">
       <p class="footer-copy">
         © Created by Osmel Nuñez Alonso ·
         <a href="https://github.com/osmelonunez/data-fmt" class="footer-icon"
@@ -141,7 +148,13 @@ formats:
           </svg>
         </a>
       </p>
-    </footer>
+  </footer>
+  <div id="infoOverlay" class="info-overlay">
+    <div class="info-content">
+      <h2>¿Qué es data-fmt?</h2>
+      <p>Formatea y transforma datos estructurados como JSON y YAML.</p>
+    </div>
+  </div>
   </div>
 
   <script type="module" src="js/main.js"></script>
